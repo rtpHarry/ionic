@@ -98,6 +98,7 @@
             we regret to inform you that the experiment is ended and we hope to one day retrieve your valuable data. From all of us
             at Ion Space Pursuits, we thank you for your participation in this important research study.
           </p>
+          <div>some property: {{someProperty}}</div>
         </ion-slide-page>
       </ion-slides>
     </ion-content>
@@ -109,15 +110,17 @@
         loop: true
       }
 
+      $scope.someProperty = "Waiting...";
+
       $scope.data = {};
 
       $scope.$watch('data.slider', function(nv, ov) {
         $scope.slider = $scope.data.slider;
       })
 
-      $timeout(function() {
-        //$scope.slider.slideNext();
-      }, 1000)
+      $interval(function() {
+        $scope.someProperty = Math.random();
+      }, 500)
 
       $scope.doClick = function() {
         console.log('CLICK');

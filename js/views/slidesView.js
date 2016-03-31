@@ -24,6 +24,8 @@
 
         if (!(this instanceof Swiper)) return new Swiper(container, params);
 
+        var watchesCreated = true;
+
         var defaults = {
             direction: 'horizontal',
             touchEventsTarget: 'container',
@@ -2071,26 +2073,55 @@
                 slide.attr('data-swiper-slide-index', index);
             });
             for (i = 0; i < appendSlides.length; i++) {
+
+
+              scope = angular.element(appendSlides[i]).scope();
+
               newNode = angular.element(appendSlides[i]).clone().addClass(s.params.slideDuplicateClass);
               newNode.removeAttr('ng-transclude');
               newNode.removeAttr('ng-repeat');
-              scope = angular.element(appendSlides[i]).scope();
-              newNode = $compile(newNode)(scope);
-              angular.element(s.wrapper).append(newNode);
+              scope.$apply(function(){
+                  newNode = $compile(newNode)(scope);
+                  angular.element(s.wrapper).append(newNode);
+              });
                 //s.wrapper.append($(appendSlides[i].cloneNode(true)).addClass(s.params.slideDuplicateClass));
             }
             for (i = prependSlides.length - 1; i >= 0; i--) {
                 //s.wrapper.prepend($(prependSlides[i].cloneNode(true)).addClass(s.params.slideDuplicateClass));
 
+              scope = angular.element(prependSlides[i]).scope();
+
               newNode = angular.element(prependSlides[i]).clone().addClass(s.params.slideDuplicateClass);
               newNode.removeAttr('ng-transclude');
               newNode.removeAttr('ng-repeat');
-
-              scope = angular.element(prependSlides[i]).scope();
-              newNode = $compile(newNode)(scope);
-              angular.element(s.wrapper).prepend(newNode);
+              scope.$apply(function(){
+                newNode = $compile(newNode)(scope);
+                angular.element(s.wrapper).prepend(newNode);
+              });
+              //console.log("Scope: ", scope);
             }
+
+            if ( ! watchesCreated ){
+              watchesCreated = true;
+              var elements = document.getElementsByClassName(s.params.slideDuplicateClass);
+              console.log("Elements that are duplicates: ", elements);
+              for ( var i = 0; i < elements.length; i++ ){
+                var element = elements[i];
+                var angularElement = angular.element(element);
+                var myScope = angularElement.scope();
+                myScope.$watch("someProperty", function(){
+                  console.log("someProperty changed: ", myScope.someProperty);
+                });
+              }
+
+            }
+            else{
+              watchesCreated = false;
+              console.log("watches are already created");
+            }
+
         };
+
         s.destroyLoop = function () {
             s.wrapper.children('.' + s.params.slideClass + '.' + s.params.slideDuplicateClass).remove();
             s.slides.removeAttr('data-swiper-slide-index');
@@ -2119,10 +2150,12 @@
             }
             if (typeof slides === 'object' && slides.length) {
                 for (var i = 0; i < slides.length; i++) {
+                  console.log("appendSlide: Directly Appending");
                     if (slides[i]) s.wrapper.append(slides[i]);
                 }
             }
             else {
+              console.log("appendSlide: Directly Appending");
                 s.wrapper.append(slides);
             }
             if (s.params.loop) {
@@ -2139,11 +2172,13 @@
             var newActiveIndex = s.activeIndex + 1;
             if (typeof slides === 'object' && slides.length) {
                 for (var i = 0; i < slides.length; i++) {
+                  console.log("prependSlide: directly preprending");
                     if (slides[i]) s.wrapper.prepend(slides[i]);
                 }
                 newActiveIndex = s.activeIndex + slides.length;
             }
             else {
+              console.log("prependSlide: directly preprending");
                 s.wrapper.prepend(slides);
             }
             if (s.params.loop) {
@@ -2155,6 +2190,7 @@
             s.slideTo(newActiveIndex, 0, false);
         };
         s.removeSlide = function (slidesIndexes) {
+          console.log("removeSlide");
             if (s.params.loop) {
                 s.destroyLoop();
                 s.slides = s.wrapper.children('.' + s.params.slideClass);
@@ -2253,6 +2289,7 @@
                             cubeShadow = s.wrapper.find('.swiper-cube-shadow');
                             if (cubeShadow.length === 0) {
                                 cubeShadow = $('<div class="swiper-cube-shadow"></div>');
+                                console.log("appendSlide: Directly Appending");
                                 s.wrapper.append(cubeShadow);
                             }
                             cubeShadow.css({height: s.width + 'px'});
