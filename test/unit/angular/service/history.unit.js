@@ -1,3 +1,10 @@
+function getMostRecentBackViewId(view){
+  if ( view && view.backViews && view.backViews.length > 0 ){
+    return view.backViews[view.backViews.length - 1];
+  }
+  return null;
+}
+
 describe('Ionic History', function() {
   var ionicHistory, rootScope, stateProvider, window;
 
@@ -52,7 +59,8 @@ describe('Ionic History', function() {
     expect(currentView.viewId).toBeDefined();
     expect(currentView.index).toEqual(0);
     expect(currentView.historyId).toBeDefined();
-    expect(currentView.backViewId).toEqual(null);
+    console.log("currentView.backViews: ", currentView.backViews);
+    expect(currentView.backViews.length).toEqual(0);
     expect(currentView.forwardViewId).toEqual(null);
     expect(currentView.url).toEqual('/home');
 
@@ -110,7 +118,8 @@ describe('Ionic History', function() {
     var backView = ionicHistory.backView();
     var forwardView = ionicHistory.forwardView();
     expect(currentView.stateName).toEqual('about');
-    expect(currentView.backViewId).toEqual(backView.viewId);
+    var mostRecentBackViewId = getMostRecentBackViewId(currentView);
+    expect(mostRecentBackViewId).toEqual(backView.viewId);
     expect(backView.stateName).toEqual('home');
     expect(forwardView).toEqual(null);
     expect(registerData.direction).toEqual('forward');
@@ -127,7 +136,8 @@ describe('Ionic History', function() {
     backView = ionicHistory.backView();
     forwardView = ionicHistory.forwardView();
     expect(backView.stateName).toEqual('about');
-    expect(currentView.backViewId).toEqual(backView.viewId);
+    var mostRecentBackViewId = getMostRecentBackViewId(currentView);
+    expect(mostRecentBackViewId).toEqual(backView.viewId);
     expect(ionicHistory.forwardView()).toEqual(null);
     expect(registerData.direction).toEqual('forward');
     expect(registerData.action).toEqual('newView');
@@ -141,7 +151,8 @@ describe('Ionic History', function() {
     currentView = ionicHistory.currentView();
     backView = ionicHistory.backView();
     forwardView = ionicHistory.forwardView();
-    expect(currentView.backViewId).toEqual(backView.viewId);
+    var mostRecentBackViewId = getMostRecentBackViewId(currentView);
+    expect(mostRecentBackViewId).toEqual(backView.viewId);
     expect(currentView.forwardViewId).toEqual(forwardView.viewId);
     expect(backView.stateName).toEqual('home');
     expect(forwardView.stateName).toEqual('contact');
@@ -190,7 +201,8 @@ describe('Ionic History', function() {
     var forwardView = ionicHistory.forwardView();
     expect(aboutReg.action).toEqual('newView');
     expect(currentView.viewId).toEqual(aboutReg.viewId);
-    expect(currentView.backViewId).toEqual(homeReg.viewId);
+    var mostRecentBackViewId = getMostRecentBackViewId(currentView);
+    expect(mostRecentBackViewId).toEqual(homeReg.viewId);
     expect(currentView.forwardViewId).toEqual(null);
     expect(backView.viewId).toEqual(homeReg.viewId);
     expect(backView.forwardViewId).toEqual(currentView.viewId);
@@ -219,7 +231,8 @@ describe('Ionic History', function() {
     expect(currentView.viewId).toEqual(tab1view1Reg.viewId);
     expect(currentView.historyId).toEqual(tab1Scope.$historyId);
     expect(currentView.historyId).toEqual(tab1view1Reg.historyId);
-    expect(currentView.backViewId).toEqual(aboutReg.viewId);
+    var mostRecentBackViewId = getMostRecentBackViewId(currentView);
+    expect(mostRecentBackViewId).toEqual(aboutReg.viewId);
     expect(currentView.forwardViewId).toEqual(null);
     expect(backView.viewId).toEqual(aboutReg.viewId);
     expect(backView.forwardViewId).toEqual(currentView.viewId);
@@ -231,7 +244,8 @@ describe('Ionic History', function() {
     currentView = ionicHistory.currentView();
     backView = ionicHistory.backView();
     forwardView = ionicHistory.forwardView();
-    expect(currentView.backViewId).toEqual(tab1view1Reg.viewId);
+    var mostRecentBackViewId = getMostRecentBackViewId(currentView);
+    expect(mostRecentBackViewId).toEqual(tab1view1Reg.viewId);
     expect(currentView.forwardViewId).toEqual(null);
     expect(backView.viewId).toEqual(tab1view1Reg.viewId);
     expect(backView.forwardViewId).toEqual(currentView.viewId);
@@ -251,7 +265,8 @@ describe('Ionic History', function() {
     backView = ionicHistory.backView();
     forwardView = ionicHistory.forwardView();
     expect(currentView.viewId).toEqual(homeReg.viewId);
-    expect(currentView.backViewId).toEqual(null);
+    var mostRecentBackViewId = getMostRecentBackViewId(currentView);
+    expect(mostRecentBackViewId).toEqual(null);
     expect(currentView.forwardViewId).toEqual(null);
     expect(ionicHistory.viewHistory().histories.root.cursor).toEqual(0);
     expect(ionicHistory.viewHistory().histories.root.stack.length).toEqual(1);
@@ -266,7 +281,8 @@ describe('Ionic History', function() {
     backView = ionicHistory.backView();
     forwardView = ionicHistory.forwardView();
     expect(currentView.viewId).toEqual(aboutReg.viewId);
-    expect(currentView.backViewId).toEqual(homeReg.viewId);
+    var mostRecentBackViewId = getMostRecentBackViewId(currentView);
+    expect(mostRecentBackViewId).toEqual(homeReg.viewId);
     expect(currentView.forwardViewId).toEqual(null);
     expect(backView.viewId).toEqual(homeReg.viewId);
     expect(backView.forwardViewId).toEqual(currentView.viewId);
@@ -283,10 +299,12 @@ describe('Ionic History', function() {
     backView = ionicHistory.backView();
     forwardView = ionicHistory.forwardView();
     expect(currentView.viewId).toEqual(homeReg.viewId);
-    expect(currentView.backViewId).toEqual(null);
+    var mostRecentBackViewId = getMostRecentBackViewId(currentView);
+    expect(mostRecentBackViewId).toEqual(null);
     expect(currentView.forwardViewId).toEqual(aboutReg.viewId);
     expect(forwardView.viewId).toEqual(aboutReg.viewId);
-    expect(forwardView.backViewId).toEqual(currentView.viewId);
+    var mostRecentBackViewId = getMostRecentBackViewId(forwardView);
+    expect(mostRecentBackViewId).toEqual(currentView.viewId);
     expect(ionicHistory.viewHistory().histories.root.cursor).toEqual(0);
     expect(ionicHistory.viewHistory().histories.root.stack.length).toEqual(2);
     expect(homeReg2.action).toEqual('moveBack');
@@ -300,7 +318,8 @@ describe('Ionic History', function() {
     currentView = ionicHistory.currentView();
     backView = ionicHistory.backView();
     forwardView = ionicHistory.forwardView();
-    expect(currentView.backViewId).toEqual(homeReg.viewId);
+    var mostRecentBackViewId = getMostRecentBackViewId(currentView);
+    expect(mostRecentBackViewId).toEqual(homeReg.viewId);
     expect(currentView.forwardViewId).toEqual(null);
     expect(forwardView).toEqual(null);
     expect(backView.viewId).toEqual(homeReg.viewId);
@@ -405,11 +424,13 @@ describe('Ionic History', function() {
 
     expect(currentView.stateName).toEqual('tabs.tab1view1');
     expect(currentView.viewId).toEqual(tab1view1Reg.viewId);
-    expect(currentView.backViewId).toEqual(homeReg.viewId);
+    var mostRecentBackViewId = getMostRecentBackViewId(currentView);
+    expect(mostRecentBackViewId).toEqual(homeReg.viewId);
     expect(currentView.forwardViewId).toEqual(null);
 
     expect(backView.stateName).toEqual('home');
-    expect(backView.backViewId).toEqual(null);
+    var mostRecentBackViewId = getMostRecentBackViewId(backView);
+    expect(mostRecentBackViewId).toEqual(null);
     expect(backView.forwardViewId).toEqual(currentView.viewId);
 
     expect(forwardView).toEqual(null);
@@ -430,12 +451,14 @@ describe('Ionic History', function() {
     forwardView = ionicHistory.forwardView();
 
     expect(currentView.stateName).toEqual('home');
-    expect(currentView.backViewId).toEqual(null);
+    var mostRecentBackViewId = getMostRecentBackViewId(currentView);
+    expect(mostRecentBackViewId).toEqual(null);
     expect(currentView.forwardViewId).toEqual(tab1view1Reg.viewId);
 
     expect(forwardView.stateName).toEqual('tabs.tab1view1');
     expect(forwardView.viewId).toEqual(tab1view1Reg.viewId);
-    expect(forwardView.backViewId).toEqual(currentView.viewId);
+    var mostRecentBackViewId = getMostRecentBackViewId(forwardView);
+    expect(mostRecentBackViewId).toEqual(currentView.viewId);
     expect(forwardView.forwardViewId).toEqual(null);
     expect(ionicHistory.viewHistory().histories.root.cursor).toEqual(0);
     expect(ionicHistory.viewHistory().histories.root.stack.length).toEqual(1);
@@ -467,12 +490,14 @@ describe('Ionic History', function() {
 
     expect(currentView.stateName).toEqual('tabs.tab1view1');
     expect(currentView.viewId).toEqual(tab1view1Reg.viewId);
-    expect(currentView.backViewId).toEqual(homeReg.viewId);
+    var mostRecentBackViewId = getMostRecentBackViewId(currentView);
+    expect(mostRecentBackViewId).toEqual(homeReg.viewId);
     expect(currentView.forwardViewId).toEqual(null);
 
     expect(backView.viewId).toEqual(homeReg.viewId);
     expect(backView.stateName).toEqual('home');
-    expect(backView.backViewId).toEqual(null);
+    var mostRecentBackViewId = getMostRecentBackViewId(backView);
+    expect(mostRecentBackViewId).toEqual(null);
     expect(backView.forwardViewId).toEqual(currentView.viewId);
 
     expect(forwardView).toEqual(null);
@@ -621,7 +646,8 @@ describe('Ionic History', function() {
     expect(currentView.viewId).toEqual(registerData.viewId);
     forwardView = ionicHistory.forwardView();
     expect(currentView.forwardViewId).toEqual(ionicHistory.viewHistory().histories[tab1Scope.$historyId].stack[1].viewId);
-    expect(forwardView.backViewId).toEqual(currentView.viewId);
+    var mostRecentBackViewId = getMostRecentBackViewId(forwardView);
+    expect(mostRecentBackViewId).toEqual(currentView.viewId);
     expect(ionicHistory.viewHistory().histories[tab1Scope.$historyId].cursor).toEqual(0);
     expect(ionicHistory.viewHistory().histories[tab1Scope.$historyId].stack.length).toEqual(2);
     expect(registerData.action).toEqual('moveBack');
@@ -677,7 +703,8 @@ describe('Ionic History', function() {
     expect(ionicHistory.viewHistory().histories[tab1Scope.$historyId].cursor).toEqual(1);
     expect(registerData.action).toEqual('newView');
     expect(registerData.direction).toEqual('forward');
-    expect(ionicHistory.viewHistory().views[tab1view2ViewId].backViewId).toEqual(tab1view1ViewId);
+    var mostRecentBackViewId = getMostRecentBackViewId(ionicHistory.viewHistory().views[tab1view2ViewId]);
+    expect(mostRecentBackViewId).toEqual(tab1view1ViewId);
 
     // go to view 1 in tab 2
     tab2view1Scope = { $parent: tab2Scope };
@@ -689,7 +716,8 @@ describe('Ionic History', function() {
     expect(registerData.action).toEqual('moveBack');
     expect(registerData.direction).toEqual('swap');
     currentView = ionicHistory.currentView();
-    expect(currentView.backViewId).toEqual(tab1view2ViewId);
+    var mostRecentBackViewId = getMostRecentBackViewId(currentView);
+    expect(mostRecentBackViewId).toEqual(tab1view2ViewId);
     expect(currentView.forwardViewId).toEqual(null);
 
     // should be remembered at the tab 1 view 2
@@ -719,7 +747,8 @@ describe('Ionic History', function() {
     var tab1view2Reg = ionicHistory.register(tab1Container, false);
     expect(ionicHistory.viewHistory().histories[tab1Container.$historyId].cursor).toEqual(1);
     currentView = ionicHistory.currentView();
-    expect(currentView.backViewId).toEqual(tab1view1Reg.viewId);
+    var mostRecentBackViewId = getMostRecentBackViewId(currentView);
+    expect(mostRecentBackViewId).toEqual(tab1view1Reg.viewId);
 
     // register tab2, view1
     $state.go('tabs.tab2view1');

@@ -92,7 +92,30 @@ function($rootScope, $state, $location, $window, $timeout, $ionicViewSwitcher, $
   }
 
   function getBackView(view) {
-    return (view ? getViewById(view.backViewId) : null);
+    if ( ! view || ! view.backViews || view.backViews.length === 0 ){
+      return null;
+    }
+    var mostRecentBackViewId = view.backViews[view.backViews.length - 1];
+    return getViewById(mostRecentBackViewId);
+    //return (view ? getViewById(view.backViewId) : null);
+  }
+
+  function pushBackView(viewToPushTo, viewIdToPush){
+    if ( ! viewToPushTo || ! viewToPushTo.backViews || ! viewIdToPush ){
+      throw new Error("Invalid data or empty stack");
+    }
+
+    viewToPushTo.backViews.push(viewIdToPush);
+  }
+
+  function popBackView(view){
+    if ( ! view || ! view.backViews || view.backViews.length === 0 ){
+      return null;
+    }
+    var viewId = view.backViews[view.backViews.length - 1];
+    // remove the item after grabbing the id
+    view.backViews.splice(view.backViews.length - 1, 1);
+    return getViewById(viewId);
   }
 
   function getForwardView(view) {
@@ -200,11 +223,15 @@ function($rootScope, $state, $location, $window, $timeout, $ionicViewSwitcher, $
 
       } else if (backView && backView.stateId === currentStateId) {
         // they went back one, set the old current view as a forward view
+
+
         viewId = backView.viewId;
         historyId = backView.historyId;
         action = ACTION_MOVE_BACK;
         if (backView.historyId === currentView.historyId) {
           // went back in the same history
+          // pop the most recent of backViews off the currentView
+          popBackView(currentView);
           direction = DIRECTION_BACK;
 
         } else if (currentView) {
@@ -218,6 +245,7 @@ function($rootScope, $state, $location, $window, $timeout, $ionicViewSwitcher, $
             tmp = getHistoryById(currentView.historyId);
             if (tmp && tmp.parentHistoryId === hist.parentHistoryId) {
               direction = DIRECTION_SWAP;
+              popBackView(currentView);
             }
           }
         }
@@ -275,9 +303,16 @@ function($rootScope, $state, $location, $window, $timeout, $ionicViewSwitcher, $
         // if switching to a different history, and the history of the view we're switching
         // to has an existing back view from a different history than itself, then
         // it's back view would be better represented using the current view as its back view
-        tmp = getViewById(switchToView.backViewId);
+        /*tmp = getViewById(switchToView.backViewId);
         if (tmp && switchToView.historyId !== tmp.historyId) {
           hist.stack[hist.cursor].backViewId = currentView.viewId;
+        }
+        */
+
+        tmp = getBackView(switchToView);
+        if ( tmp && switchToView.historyId !== tmp.historyId ){
+          // push a new back view on the stack
+          hist.stack[hist.cursor].backViews.push(currentView.viewId);
         }
 
       } else {
@@ -350,11 +385,12 @@ function($rootScope, $state, $location, $window, $timeout, $ionicViewSwitcher, $
         }
 
         // add the new view
-        viewHistory.views[viewId] = this.createView({
+        var newView = this.createView({
           viewId: viewId,
           index: hist.stack.length,
           historyId: hist.historyId,
-          backViewId: (currentView && currentView.viewId ? currentView.viewId : null),
+          //backViewId: (currentView && currentView.viewId ? currentView.viewId : null),
+          backViews: [],
           forwardViewId: null,
           stateId: currentStateId,
           stateName: this.currentStateName(),
@@ -362,6 +398,10 @@ function($rootScope, $state, $location, $window, $timeout, $ionicViewSwitcher, $
           url: url,
           canSwipeBack: canSwipeBack(ele, viewLocals)
         });
+        if ( currentView && currentView.viewId ){
+          newView.backViews.push(currentView.viewId);
+        }
+        viewHistory.views[viewId] = newView;
 
         // add the new view to this history's stack
         hist.stack.push(viewHistory.views[viewId]);
@@ -371,12 +411,18 @@ function($rootScope, $state, $location, $window, $timeout, $ionicViewSwitcher, $
       $timeout.cancel(nextViewExpireTimer);
       if (nextViewOptions) {
         if (nextViewOptions.disableAnimate) direction = DIRECTION_NONE;
-        if (nextViewOptions.disableBack) viewHistory.views[viewId].backViewId = null;
+        if (nextViewOptions.disableBack){
+          //viewHistory.views[viewId].backViewId = null;
+          // wipe out all back views
+          viewHistory.views[viewId].backViews = [];
+        }
         if (nextViewOptions.historyRoot) {
           for (x = 0; x < hist.stack.length; x++) {
             if (hist.stack[x].viewId === viewId) {
               hist.stack[x].index = 0;
-              hist.stack[x].backViewId = hist.stack[x].forwardViewId = null;
+              hist.stack[x].forwardViewId = null;
+              // wipe out all back views
+              hist.stack[x].backViews = [];
             } else {
               delete viewHistory.views[hist.stack[x].viewId];
             }
@@ -398,8 +444,15 @@ function($rootScope, $state, $location, $window, $timeout, $ionicViewSwitcher, $
             }
             viewHistory.forwardView = null;
             viewHistory.currentView.index = viewHistory.backView.index;
-            viewHistory.currentView.backViewId = viewHistory.backView.backViewId;
-            viewHistory.backView = getBackView(viewHistory.backView);
+
+            // grab the current back view's top back view
+            var backViewsBackView = getBackView(viewHistory.backView);
+            if ( backViewsBackView ){
+              pushBackView(viewHistory.currentView, backViewsBackView.viewId);
+            }
+
+            //viewHistory.currentView.backViewId = viewHistory.backView.backViewId;
+            viewHistory.backView = backViewsBackView;
             hist.stack.splice(x, 1);
             break;
           }
@@ -504,8 +557,21 @@ function($rootScope, $state, $location, $window, $timeout, $ionicViewSwitcher, $
      * @returns {string} Returns the back view's title.
      */
     backTitle: function(view) {
-      var backView = (view && getViewById(view.backViewId)) || viewHistory.backView;
-      return backView && backView.title;
+      var backView = null;
+      if ( view ){
+        backView = getBackView(view);
+      }
+      if ( ! backView ){
+        backView = viewHistory.backView;
+      }
+      if ( backView ){
+        return backView.title;
+      }
+      return false;
+      // TODO: Is this originally returning a boolean?
+
+      //var backView = (view && getViewById(view.backViewId)) || viewHistory.backView;
+      //return backView && backView.title;
     },
 
     /**
@@ -625,7 +691,8 @@ function($rootScope, $state, $location, $window, $timeout, $ionicViewSwitcher, $
           }
 
           if (currentView && currentView.historyId === historyId) {
-            currentView.backViewId = currentView.forwardViewId = null;
+            currentView.forwardViewId = null;
+            currentView.backViews = [];
             histories[historyId].stack.push(currentView);
           } else if (histories[historyId].destroy) {
             histories[historyId].destroy();

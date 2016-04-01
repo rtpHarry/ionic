@@ -9,11 +9,17 @@ var path = require('canonical-path');
 var uuid = require('node-uuid');
 
 var projectRoot = path.resolve(__dirname, '../..');
-
-var karmaConf = require('../karma.conf.js');
 var karmaSauceConf = require('../karma-sauce.conf.js');
 
 module.exports = function(gulp, argv) {
+
+  console.log("argv.testGrep: ", argv.testGrep);
+
+  var includeCodeCoverage = true;
+  if ( argv.skipCoverage ){
+    includeCodeCoverage = false;
+  }
+  var karmaConf = require('../karma.conf')(includeCodeCoverage);
 
   /*
    * Connect to Saucelabs
@@ -46,11 +52,21 @@ module.exports = function(gulp, argv) {
 
   gulp.task('karma', function(done) {
     karmaConf.singleRun = true;
+    if ( argv.testGrep ){
+      karmaConf.client = {
+        args: ['--grep', argv.testGrep]
+      }
+    }
     karma.start(karmaConf, done);
   });
 
   gulp.task('karma-watch', function(done) {
     karmaConf.singleRun = false;
+    if ( argv.testGrep ){
+      karmaConf.client = {
+        args: ['--grep', argv.testGrep]
+      }
+    }
     karma.start(karmaConf, done);
   });
 
